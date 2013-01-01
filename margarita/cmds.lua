@@ -25,7 +25,6 @@ function _M.init(args)
 	for sql in string.gmatch(model.schema, '([^;]+)') do
 		db:execute(sql)
 	end
-	db:close()
 	f=io.open('margarita.wdb','w')
 	f:write(fn)
 	f:close()
@@ -58,6 +57,23 @@ function _M.routes()
 	for r in margarita.db:rows('SELECT * FROM routes') do
 		print(r.route_short_name)
 		print(string.format('%s [%s] (%s)', r.route_short_name, r.route_id, agencies[r.agency_id]))
+	end
+end
+
+function _M.import(args)
+	local format = table.remove(args,1) or error('Musi byt uvedeny format!')
+	local importer=require("margarita.import."..format)
+	importer(args)
+end
+
+_M["services-valid-for"] = function(args)
+	local Date=require "pl.date"
+	local pretty=require "pl.pretty"
+	local ymd=Date.Format('yyyy-mm-dd')
+	local d=ymd:parse(args[1])
+	local sc = model.valid_services(margarita.db, d.tab)
+	for k,v in pairs(sc) do
+		print(k)
 	end
 end
 

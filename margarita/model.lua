@@ -6,6 +6,7 @@
 -- License: MIT
 ----
 local _M={}
+local Date=require "pl.Date"
 
 _M.route_type={
 	[0]='TRAM',
@@ -29,6 +30,14 @@ _M.pickup_type={
 	[2]='objednavka telefonem',
 	[3]='zastavka na znameni',
 }
+
+_M.service_exception_type={
+	ADDED=1,
+	REMOVED=2
+}
+
+-- index starts at 1, welcome to Lua :-D
+_M.day_names={'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'}
 
 _M.dropoff_type=_M.pickup_type
 
@@ -55,6 +64,27 @@ _M.check_db=function(db_wrap)
 	else
 		return nil, 'Spatna verze databaze!'
 	end
+end
+
+function _M.valid_services(db_wrap, orig_date)
+	local ymd = Date.Format('yyyy-mm-dd')
+	local date = Date(orig_date)
+	local day_name = _M.day_names[ date.tab.wday ]
+	local query = string.format(
+		'SELECT service_id,1 FROM calendar WHERE start_date<="%s" AND end_date>="%s" AND %s=1',
+		ymd:tostring(date),
+		ymd:tostring(date),
+		day_name);
+	local services = db_wrap:get_pairs(query)
+	local exceptions_query = string.format('SELECT * FROM calendar_dates WHERE date="%s"', ymd:tostring(date) )
+	for exc in db_wrap:rows(exceptions_query) do
+		if exc.exception_type == _M.service_exception_type.ADDED then
+			services[ exc.service_id ] = 1
+		elseif exc.exception_type == _M.service_exception_type.REMOVED then
+			services[ exc.service_id ] = nil
+		end
+	end
+	return services
 end
 
 return _M

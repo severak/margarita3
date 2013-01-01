@@ -1,3 +1,5 @@
+pretty = require "pl.pretty"
+
 function tt_test()
 	local tt=require "margarita.tt"
 	local a=tt.table2D{
@@ -41,4 +43,32 @@ function db_test()
 	print(db_utils.quote("ahoj 'obludo' jak se vede"))
 end
 
-db_test()
+function service_test()
+	local db_utils=require "margarita.db_utils"
+	local model = require "margarita.model"
+	local db = db_utils.wrap('test.vdp')
+	print('2013-01-01')
+	pretty.dump( model.valid_services(db, {year=2013, month=1, day=1}) )
+	print('2012-01-01')
+	pretty.dump( model.valid_services(db, {year=2012, month=1, day=1}) )
+	print('2013-01-02')
+	pretty.dump( model.valid_services(db, {year=2013, month=1, day=2}) )
+	print('2013-01-06')
+	pretty.dump( model.valid_services(db, {year=2013, month=1, day=6}) )
+end
+
+function insert_test()
+	db_utils=require "margarita.db_utils"
+	db=db_utils.wrap('test.vdp')
+	print(db_utils.quote(64))
+	print(db_utils.quote("64"))
+	print(db_utils.quote("64aaa"))
+	print(db_utils.quote("aaa bbb ccc"))
+	print(db_utils.quote("aaa ' bbb"))
+	print(db_utils.quote(nil))
+	db:execute('DELETE FROM margarita_meta WHERE key="insert test"')
+	db:insert('margarita_meta', {key='insert test', val='ok'})
+	pretty.dump(db:get_pairs('SELECT key,val FROM margarita_meta'))
+end
+
+insert_test();

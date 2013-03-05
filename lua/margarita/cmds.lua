@@ -77,4 +77,10 @@ _M["services-valid-for"] = function(args)
 	end
 end
 
+_M.ui = function()
+	local ui = require 'margarita.ui'
+	ui:set_db(margarita.db)
+	ui:run()
+end
+
 return _M
